@@ -488,7 +488,19 @@ class LiveAntiSpoofingDetector:
         
         for codec in codecs:
             try:
-                fourcc = cv2.VideoWriter_fourcc(*codec)
+                # Handle OpenCV version compatibility for FOURCC
+                # Try to get FOURCC in a compatible way
+                try:
+                    fourcc = cv2.VideoWriter_fourcc(*codec)
+                except AttributeError:
+                    try:
+                        fourcc = cv2.cv.CV_FOURCC(*codec)
+                    except AttributeError:
+                        # As a last resort, try using CAP_PROP_FOURCC or raise error
+                        try:
+                            fourcc = int(cv2.CAP_PROP_FOURCC)
+                        except Exception:
+                            raise AttributeError("No suitable FOURCC function found in cv2 module.")
                 writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
                 if writer.isOpened():
                     print(f"📹 Using codec: {codec}")
@@ -658,9 +670,10 @@ def main():
     """Main function"""
     parser = argparse.ArgumentParser(description='Live Face Anti-Spoofing Detection System v2')
     parser.add_argument('--yolo_model', type=str, 
-                       default='Saved_Model/yolov5s-face.onnx',
+                       default='face_detection_model/yolov5s-face.onnx',
                        help='Path to YOLO face detection model')
     parser.add_argument('--antispoofing_model', type=str,
+                        default="anti_spoofing_model/smart_antispoofing_model_20250621_152348_acc_0.8856.pkl",
                        help='Path to trained anti-spoofing model')
     parser.add_argument('--mode', type=str, choices=['webcam', 'video'], 
                        default='webcam',
