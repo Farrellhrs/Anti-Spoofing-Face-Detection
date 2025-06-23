@@ -1,0 +1,12 @@
+Smart Face Anti-Spoofing Training Summary
+========================================
+
+Timestamp: 20250621_152348
+Dataset: Face Anti-Spoofing.v4i.yolov11
+Quick Mode: True
+
+Best HOG Config: standard
+Best SVM Params: {'C': 10, 'class_weight': None, 'gamma': 'scale', 'kernel': 'rbf'}
+
+Final Accuracy: 0.8856
+AUC Score: 0.9513
