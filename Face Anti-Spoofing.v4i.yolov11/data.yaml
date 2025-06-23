@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 2
+names: ['fake', 'real']
+
+roboflow:
+  workspace: kolzek
+  project: face-anti-spoofing-ezpqo
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/kolzek/face-anti-spoofing-ezpqo/dataset/4
