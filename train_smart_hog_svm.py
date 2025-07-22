@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#Classification Script for Smart Face Anti-Spoofing Trainer
 """
 Fast & Smart Face Anti-Spoofing Trainer with Progress Monitoring
 
