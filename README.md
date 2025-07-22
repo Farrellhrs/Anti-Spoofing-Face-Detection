@@ -278,6 +278,43 @@ confidence = svm_model.predict_proba(features_scaled) # [fake_prob, real_prob]
 ```
 
 ## 📱 Usage
+### 4. Running `live_detection_v2.py` (Command-Line Interface)
+
+You can run the real-time anti-spoofing detection from the command line using `live_detection_v2.py`.
+
+**Arguments/Parameters:**
+
+| Argument              | Type    | Default                                                    | Description                                      |
+|-----------------------|---------|------------------------------------------------------------|--------------------------------------------------|
+| `--yolo_model`        | string  | `face_detection_model/yolov5s-face.onnx`                   | Path to YOLO face detection ONNX model           |
+| `--antispoofing_model`| string  | `anti_spoofing_model/smart_antispoofing_model_*.pkl`       | Path to trained anti-spoofing model              |
+| `--mode`              | string  | `webcam` (choices: `webcam`, `video`)                      | Detection mode: webcam or video file             |
+| `--camera_id`         | int     | `0`                                                        | Camera ID for webcam mode                        |
+| `--video_input`       | string  |                                                            | Input video file path (required for video mode)  |
+| `--video_output`      | string  |                                                            | Output video file path (optional)                |
+| `--conf_threshold`    | float   | `0.5`                                                      | YOLO confidence threshold                        |
+| `--nms_threshold`     | float   | `0.4`                                                      | YOLO NMS threshold                               |
+| `--save_video`        | flag    | `False`                                                    | Save detection video in webcam mode              |
+
+**Example: Run with webcam (default):**
+```bash
+python live_detection_v2.py --yolo_model face_detection_model/yolov5s-face.onnx --antispoofing_model anti_spoofing_model/smart_antispoofing_model_20250621_152348_acc_0.8856.pkl --mode webcam
+```
+
+**Example: Run on a video file:**
+```bash
+python live_detection_v2.py --mode video --video_input "Sample Images and Video/samplevideo.mp4" --video_output "output.avi"
+```
+
+**Example: Change thresholds:**
+```bash
+python live_detection_v2.py --conf_threshold 0.6 --nms_threshold 0.3
+```
+
+For more details, run:
+```bash
+python live_detection_v2.py --help
+```
 
 ### 1. Streamlit Web Application
 
