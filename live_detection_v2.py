@@ -235,25 +235,75 @@ class AntiSpoofingClassifier:
                 self.svm_model = model_data
             
             self.scaler = model_data.get('scaler', None)
-            self.hog_params = model_data.get('hog_params', {
-                'orientations': 9,
-                'pixels_per_cell': (8, 8),
-                'cells_per_block': (2, 2),
-                'visualize': False,
-                'transform_sqrt': True,
-                'block_norm': 'L2-Hys'
-            })
+            
+            # Check training type to determine correct HOG parameters
+            training_type = model_data.get('training_type', 'unknown')
+            metadata = model_data.get('metadata', {})
+            
+            if training_type == 'improved_inference_aligned':
+                # Use improved HOG parameters matching the training
+                self.hog_params = {
+                    'orientations': 12,
+                    'pixels_per_cell': (6, 6),
+                    'cells_per_block': (2, 2),
+                    'visualize': False,
+                    'block_norm': 'L2-Hys'
+                }
+            else:
+                # Use default parameters for older models
+                self.hog_params = model_data.get('hog_params', {
+                    'orientations': 9,
+                    'pixels_per_cell': (8, 8),
+                    'cells_per_block': (2, 2),
+                    'visualize': False,
+                    'transform_sqrt': True,
+                    'block_norm': 'L2-Hys'
+                })
+            
             self.image_size = model_data.get('image_size', (64, 64))
             self.class_mapping = model_data.get('class_mapping', {0: 'fake', 1: 'real'})
             self.class_names = model_data.get('class_names', ['fake', 'real'])
             
             print(f"✅ Anti-spoofing model loaded successfully")
+            print(f"   Training type: {training_type}")
             print(f"   Image size: {self.image_size}")
             print(f"   Classes: {self.class_names}")
+            print(f"   HOG parameters:")
+            print(f"     - Orientations: {self.hog_params['orientations']}")
+            print(f"     - Pixels per cell: {self.hog_params['pixels_per_cell']}")
+            print(f"     - Cells per block: {self.hog_params['cells_per_block']}")
+            print(f"     - Block norm: {self.hog_params['block_norm']}")
+            
+            # Calculate expected feature size for verification
+            expected_features = self.calculate_hog_feature_size()
+            print(f"   Expected HOG features: {expected_features}")
             
         except Exception as e:
             print(f"❌ Error loading model: {str(e)}")
             raise
+
+    def calculate_hog_feature_size(self):
+        """Calculate expected HOG feature size based on parameters"""
+        try:
+            img_h, img_w = self.image_size
+            ppc_h, ppc_w = self.hog_params['pixels_per_cell']
+            cpb_h, cpb_w = self.hog_params['cells_per_block']
+            orientations = self.hog_params['orientations']
+            
+            # Calculate number of cells
+            cells_h = img_h // ppc_h
+            cells_w = img_w // ppc_w
+            
+            # Calculate number of blocks
+            blocks_h = cells_h - cpb_h + 1
+            blocks_w = cells_w - cpb_w + 1
+            
+            # Calculate total features
+            total_features = blocks_h * blocks_w * cpb_h * cpb_w * orientations
+            
+            return total_features
+        except:
+            return "unknown"
 
     def extract_hog_features(self, image):
         """Extract HOG features from face image"""
@@ -265,15 +315,39 @@ class AntiSpoofingClassifier:
             # Normalize image
             image_normalized = exposure.equalize_hist(image)
             
-            # Extract HOG features
+            # Extract HOG features with current parameters
             features = hog(image_normalized, **self.hog_params)
+            
+            # Verify feature size matches expected
+            expected_size = self.calculate_hog_feature_size()
+            if isinstance(expected_size, int) and len(features) != expected_size:
+                print(f"⚠️  Feature size mismatch: got {len(features)}, expected {expected_size}")
+                print(f"   Using parameters: {self.hog_params}")
             
             return features
         
         except Exception as e:
             print(f"⚠️  Warning in HOG extraction: {str(e)}")
-            # Return zeros if feature extraction fails
-            return np.zeros(1764)  # Default HOG feature size
+            print(f"   Image shape: {image.shape}")
+            print(f"   HOG params: {self.hog_params}")
+            
+            # Try fallback with default parameters if the current ones fail
+            try:
+                print("   Trying fallback HOG parameters...")
+                fallback_features = hog(
+                    image_normalized,
+                    orientations=9,
+                    pixels_per_cell=(8, 8),
+                    cells_per_block=(2, 2),
+                    block_norm='L2-Hys',
+                    visualize=False
+                )
+                print(f"   Fallback successful: {len(fallback_features)} features")
+                return fallback_features
+            except:
+                # Return zeros if everything fails
+                print("   All HOG extraction methods failed, returning zeros")
+                return np.zeros(1764)  # Default size
 
     def classify_face(self, face_image):
         """

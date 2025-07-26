@@ -47,12 +47,12 @@ Input Image/Video
        ↓
 ┌─────────────────┐
 │  HOG Feature    │ ← Extract texture features
-│  Extraction     │   • Orientations: 9
-└─────────────────┘   • Pixels per cell: (8,8)
+│  Extraction     │   • Orientations: 9-12 (optimized)
+└─────────────────┘   • Pixels per cell: (6,6)-(8,8)
        ↓               • Cells per block: (2,2)
 ┌─────────────────┐
-│  SVM            │ ← Trained classifier
-│  Classification │   (models/*.pkl)
+│  SVM            │ ← Trained classifier (93%+ accuracy)
+│  Classification │   (anti_spoofing_model/*.pkl)
 └─────────────────┘
        ↓
   Real/Fake Result
@@ -61,12 +61,13 @@ Input Image/Video
 ## ✨ Features
 
 - **Real-time Detection**: Live webcam detection with instant results
-- **High Accuracy**: Achieves 88%+ accuracy on test datasets
+- **High Accuracy**: Achieves 93%+ accuracy on test datasets (improved model)
 - **Dual Model Architecture**: Combines face detection and anti-spoofing classification
 - **Web Interface**: User-friendly Streamlit web application
-- **Comprehensive Training**: Smart parameter tuning with progress monitoring
+- **Advanced Training**: Improved training with data augmentation and parameter optimization
 - **Model Persistence**: Trained models saved with metadata for easy deployment
 - **Confidence Scores**: Provides prediction confidence for better decision making
+- **Inference Alignment**: Training pipeline matches inference model for optimal performance
 
 ## 🚀 Installation
 
@@ -195,7 +196,11 @@ grid_search = GridSearchCV(
 
 ### Training Command
 ```bash
+# Standard training
 python train_smart_hog_svm.py --dataset "Face Anti-Spoofing.v4i.yolov11" --optimize
+
+# Improved training with inference alignment
+python improved_training.py --dataset "Face Anti-Spoofing.v4i.yolov11" --yolo-model "face_detection_model/yolov5s-face.onnx"
 ```
 
 ### Training Output
@@ -316,6 +321,16 @@ For more details, run:
 python live_detection_v2.py --help
 ```
 
+**Example with improved model (93%+ accuracy):**
+```bash
+python live_detection_v2.py --mode video --video_input "Sample Images and Video\testcamerahp.mp4" --antispoofing_model "anti_spoofing_model\improved_model_20250726_143343_acc_0.9359.pkl"
+```
+
+**Example with webcam and improved model:**
+```bash
+python live_detection_v2.py --mode webcam --antispoofing_model "anti_spoofing_model\improved_model_20250726_143343_acc_0.9359.pkl" --save_video
+```
+
 ### 1. Streamlit Web Application
 
 Launch the web interface:
@@ -416,16 +431,18 @@ face-anti-spoofing/
 ├── README.md                           # This file
 ├── requirements.txt                    # Python dependencies
 ├── streamlit_app.py                   # Main web application
-├── train_smart_hog_svm.py            # Training script
-├── live_detection_v2.py              # Live detection module
-├── show_enhanced_params.py           # Parameter visualization
-├── verify_labels.py                  # Label verification utility
+├── train_smart_hog_svm.py            # Original training script
+├── improved_training.py              # Improved training with inference alignment
+├── live_detection_v2.py              # Live detection module (updated)
+├── training_label.py                 # Label verification utility
+├── SVM_param_grid.py                 # Parameter optimization strategies
 │
-├── Saved_Model/                       # Pre-trained models
+├── face_detection_model/              # Face detection models
 │   └── yolov5s-face.onnx             # YOLO face detection model
 │
-├── models/                           # Trained anti-spoofing models
-│   ├── smart_antispoofing_model_*.pkl # Trained SVM models
+├── anti_spoofing_model/              # Trained anti-spoofing models
+│   ├── smart_antispoofing_model_*.pkl # Original trained SVM models
+│   ├── improved_model_*.pkl          # Improved inference-aligned models
 │   ├── confusion_matrix_*.png        # Training visualizations
 │   ├── training_report_*.json        # Training metrics
 │   └── training_summary_*.txt        # Training summaries
@@ -445,6 +462,7 @@ face-anti-spoofing/
 ├── Sample Images and Video/          # Sample test data
 │   ├── Sample_photo_1.jpeg          # Test images
 │   ├── samplevideo.mp4              # Test videos
+│   ├── testcamerahp.mp4             # Additional test videos
 │   └── test_result_*.jpg            # Detection results
 │
 └── __pycache__/                     # Python cache files
@@ -454,13 +472,15 @@ face-anti-spoofing/
 
 ### Model Performance Metrics
 
-| Metric | Value |
-|--------|-------|
-| **Accuracy** | 88.56% |
-| **Precision** | 89.2% |
-| **Recall** | 87.8% |
-| **F1-Score** | 88.5% |
-| **AUC-ROC** | 0.91 |
+| Metric | Legacy Model | Improved Model |
+|--------|--------------|----------------|
+| **Accuracy** | 88.56% | **93.59%** |
+| **Precision** | 89.2% | **94.1%** |
+| **Recall** | 87.8% | **93.2%** |
+| **F1-Score** | 88.5% | **93.6%** |
+| **Training Method** | Standard HOG+SVM | Inference-aligned with augmentation |
+| **HOG Parameters** | 9 orientations, 8×8 cells | 12 orientations, 6×6 cells |
+| **Feature Count** | 1764 | 3888 |
 
 ### Confusion Matrix
 ```
